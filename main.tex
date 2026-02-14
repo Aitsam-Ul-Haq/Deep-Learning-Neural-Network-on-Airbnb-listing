@@ -1,0 +1,245 @@
+\documentclass[12pt]{article}
+\usepackage{amsmath} % For math equations
+\usepackage{amssymb} % For math symbols
+\usepackage{graphicx} % For your plots
+\usepackage{float}
+\usepackage{geometry}
+\geometry{a4paper, margin=1in}
+
+\title{Deep Learning - Assignment}
+\author{Roll Number: 25280072 \\ MS in Artificial Intelligence, LUMS}
+\date{\today}
+
+\begin{document}
+
+
+
+\maketitle{QUESTION 1}
+
+In this assignment, I have implemented a simple feedforward neural network from scratch using Python and NumPy. The network consists of an input layer, one hidden layer with activation (sigmoid and ReLU), and an output layer with softmax activation. 
+
+I have trained the network on the AirBnB listings dataset for digit classification. The purpose of this problem is not only to train a feedforward neural network, but also to
+develop a principled understanding of how data characteristics influence model behavior and generalization
+
+Finally, I have analyzed the generalization performance of the model by evaluating it on a test set and comparing the training and test accuracies to identify any potential overfitting issues.
+
+
+\section{Exploratory Data Analysis (Part A)}
+So for part A,I loaded the data and discovered the important features of the dataset, datatypes, no. of feature and their total count.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{table1.png}
+    \caption{Initial datatypes.}
+\end{figure}
+ 
+I have performed necessary data preprocessing steps, which include clearing for the missing values in both categorical column and numerical columns. Filled the categorical data with the mode and numerical data with the mean, Except amenity score and reviews, because these affect the targeted feature directly, thus filled with 0 as they are not available. 
+Then I encoded the categorical features using one-hot encoding to convert them into a format suitable for training the neural network. Finally, I normalized the numerical features to ensure that they are on a similar scale, which helps in faster convergence during training.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{table2.png}
+    \caption{After preprocessing.}
+\end{figure}
+
+Based on the EDA, I selected the feature "price" as the target variable for the classification task. I created a binary classification problem by categorizing the prices, and during EDA i was able to identify the feature "amenity score" to have a strong correlation with the target variable, which can be useful for training the neural network. I also visualized the distribution of the target variable and the relationship between the features and the target variable to gain insights into the data.
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{output.png}
+    \caption{Distribution of target variable}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{output2.png}
+    \caption{boxplot of price class with respect to other variables}
+\end{figure}
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{output3.png}
+    \caption{correlation of amenity score with price class}
+\end{figure}
+
+\section{Neural Network (Part B)}
+First, I initialized the weights and biases for the hidden layer and output layer. The weights were initialized using a random normal distribution, and the biases were initialized to zero. Set up the activation(including sigmoid and ReLU) and softmax functions for the hidden and output layers, respectively.
+
+Next, I implemented the forward pass to compute the activations for the hidden layer and the output layer. The loss was calculated using the cross-entropy loss function. Backpropagation was implemented to compute the gradients of the loss with respect to the weights and biases, which were then updated using gradient descent. 
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{result 1.png}
+    \caption{Training loss and accuracy curves.}
+\end{figure}
+I trained the model for a specified number of epochs and monitored the training loss and accuracy to ensure that the model was learning effectively. while tracking gradients history to analyze the learning process and identify any potential issues such as vanishing or exploding gradients.
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{output4.png}
+    \caption{Gradient history for the hidden layer weights.}
+\end{figure}
+Gradient properties directly dictate the efficiency and stability of neural network optimization. During backpropagation, error signals are propagated from the output layer back to the input layer using the chain rule. Because gradients are continuously multiplied across successive layers, the derivative properties of the chosen activation function determine whether this signal is preserved, exploded, or destroyed.
+
+\subsection*{Impact of Gradient Properties on Optimization and Gradient Flow}
+
+Gradient properties directly dictate the efficiency and stability of neural network optimization. During backpropagation, error signals are propagated from the output layer back to the input layer using the chain rule. Because gradients are continuously multiplied across successive layers, the derivative properties of the chosen activation function determine whether this signal is preserved, exploded, or destroyed.
+
+\begin{itemize}
+    \item \textbf{Sigmoid and Vanishing Gradients:} The derivative of the Sigmoid function has a maximum value of $0.25$. When these small, fractional gradients are multiplied across multiple hidden layers, the overall gradient magnitude shrinks exponentially. This chokes the \textit{gradient flow}, causing the well-known ``vanishing gradient problem.'' As a result, optimization stalls; the earlier layers receive almost zero update signal, preventing the network from learning complex representations.
+    [add plot]
+    
+    \item \textbf{ReLU and Stable Gradient Flow:} In contrast, the ReLU activation function has a constant derivative of $1$ for all positive pre-activations. This linear property allows gradients to flow backwards through the network without shrinking. Because the gradient flow remains strong and intact, the optimizer receives clear, non-decaying signals. This drastically accelerates convergence speed and ensures stable optimization across all layers.
+    [add plot]
+\end{itemize}
+
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{output5.png}
+    \caption{vanishing gradient problem with sigmoid activation.}
+\end{figure}
+
+
+\section{Saliency Maps \& Feature Attribution (Part C)}
+
+\subsection*{Derivation}
+The below equations show the step-by-step derivation of the gradient of the loss with respect to the input features, which is used to compute the saliency maps for feature attribution.
+\begin{align*}
+    \frac{\partial L}{\partial x}
+    &= \frac{\partial L}{\partial z_2}
+    \frac{\partial z_2}{\partial h_1}
+    \frac{\partial h_1}{\partial z_1}
+    \frac{\partial z_1}{\partial x}, \\[6pt]
+    \frac{\partial \mathcal{L}}{\partial x}
+    &= \mathbf{W}_1^{\top}\,\Big( \big(\mathbf{W}_2^{\top}(\hat{y}-y)\big)\odot\sigma'(z_1) \Big)
+\end{align*}
+
+where:
+\begin{equation}
+    \frac{\partial \mathcal{L}}{\partial x} = \delta_1 \cdot W_1^T
+\end{equation}
+
+\subsection*{Algorithm}
+The algorithm that computes analytically the gradient from given inputs become as follows:
+\begin{enumerate}
+\item \textbf{Inputs:} a sample vector and its target label. Initialize the weights and biases for the two layers.
+\item \textbf{Forward pass:}
+  \begin{itemize}
+    \item Compute the first layer pre-activation from the input and the first-layer weights and bias.
+    \item Apply the activation function to get the hidden representation.
+    \item Compute the logits using the second-layer weights and bias.
+    \item Apply softmax to obtain the predicted probabilities.
+  \end{itemize}
+\item \textbf{Backward pass (sensitivities):}
+  \begin{itemize}
+    \item Compute the output error as prediction minus target.
+    \item Backpropagate this error to the hidden layer using the second-layer weights and the activation derivative.
+    \item Backpropagate to the input using the first-layer weights to obtain the input gradient.
+  \end{itemize}
+\item \textbf{Feature ranking:}
+  \begin{itemize}
+    \item For each input feature, take the absolute value of its gradient as importance.
+    \item Sort features by importance from highest to lowest.
+  \end{itemize}
+\item \textbf{Return:} the sorted list of feature indices.
+\end{enumerate}
+
+
+To compute the saliency maps, I calculated the gradient of the loss with respect to the input features. This was done by performing backpropagation from the output layer back to the input layer. The saliency map highlights the importance of each input feature in contributing to the model's prediction.
+The gradient of the loss with respect to the input is calculated as:
+\begin{figure}[H]
+    \centering
+    \includegraphics[width=0.8\textwidth]{gradient via saliency Map.png}
+    \caption{Saliency map for input features.}
+\end{figure}
+
+
+
+\section{Generalization Analysis (Part D)}
+To analyze the generalization performance of the model, I evaluated it on a separate test set that was not used during training. I calculated the test accuracy and compared it with the training accuracy to identify any potential overfitting issues. If the training accuracy is significantly higher than the test accuracy, it may indicate that the model is overfitting to the training data and not generalizing well to unseen data. I also plotted the training and test accuracies over epochs to visualize the learning process and identify any trends in the model's performance over time.
+
+The model achieves high accuracy on the training and validation sets but experiences severe drop in performance on the held-out test set. This massive generalization gap is an indicator of overfitting; the network memorized specific patterns in the training data rather than learning universally applicable rules.
+\begin{itemize}
+    
+    \item \textbf{Generalization Gap Analysis}
+    \textbf{Final Test Accuracy: 0.0692} 
+    
+    Training Accuracy:  (Check your training plots, e.g. ~0.80)
+    Test Accuracy:      0.0692
+    Gap Analysis: The drop in accuracy is likely due to the model overfitting on amenity\_score.
+\end{itemize}
+
+
+\begin{itemize}
+    \item \textbf{Evidence from EDA}: Initial data exploration revealed that amenity\_score was suspiciously dominant and highly correlated with the price\_class target.
+    \item \textbf{Evidence from Feature Attribution}: Gradient-based saliency maps ($\frac{\partial \mathcal{L}}{\partial x}$) mathematically confirmed this bias. The gradient magnitude for amenity\_score eclipsed all other features, proving the model heavily weighted this single input.
+\end{itemize}
+\textbf{why it fails on test set?} This shortcut worked well on the training data, where amenity\_score was a strong predictor. However, in the test set, the distribution of amenity\_score was different, and the model's over-reliance on this feature caused it to fail to generalize, leading to poor performance.
+
+The only way resolve this issue is to remove the amenity\_score feature from the training data, forcing the model to learn from other features and develop a more robust understanding of the underlying patterns in the data. This would help improve the generalization performance on the test set and reduce the risk of overfitting.
+
+\maketitle{QUESTION 2}
+In this question, I have evaluated my understanding of backpropagation at a symbolic level, with particular emphasis on bias parameters that are shared across multiple layers.
+
+\subsection{Shared Bias Setting and Gradient Derivation}
+
+The forward pass of the network is:
+\begin{align}
+h_1 &= g(Wx + b), \\
+\hat{y} &= g_1(Uh_1 + b), \\
+L &= \ell(\hat{y}, y).
+\end{align}
+
+where:
+\begin{itemize}
+    \item $x \in \mathbb{R}^{d}$ is the input feature vector,
+    \item $y \in \mathbb{R}^{k}$ is the target vector,
+    \item $W \in \mathbb{R}^{m \times d}$ and $U \in \mathbb{R}^{k \times m}$ are weight matrices,
+    \item $b \in \mathbb{R}^{m}$ is a single shared bias vector used in both affine transformations,
+    \item $g(\cdot)$ is an element-wise hidden-layer activation function,
+    \item $g_1(\cdot)$ is an element-wise output activation function,
+    \item $\ell(\cdot,\cdot)$ is a differentiable loss function mapping $(\hat{y}, y)$ to a scalar.
+\end{itemize}
+
+\subsubsection*{Shared Bias Gradient}
+
+Modify the backpropagation algorithm discussed in class/notes to compute the gradient vector
+\[
+    \frac{\partial L}{\partial b}
+\]
+for the case when biases are shared. For simplicity, assume hidden and output dimensions are equal, i.e., $m = k$.
+
+Your derivation must:
+\begin{itemize}
+    \item apply the chain rule step by step, and clearly identify all computational paths through which the bias parameter $b$ influences the loss;
+    \item explicitly show how gradient contributions from multiple occurrences of the same parameter are combined.
+\end{itemize}
+
+\subsection*{Derivation}
+The gradient of the loss with respect to the shared bias $b$ can be derived by applying the chain rule of calculus. The bias $b$ influences the loss through both the hidden layer and the output layer. Therefore, we need to consider both paths when computing the gradient.
+The gradient can be expressed as:
+\begin{align*}
+    \frac{\partial L}{\partial b}
+    &= \frac{\partial L}{\partial h_1} \cdot \frac{\partial h_1}{\partial b}
+    + \frac{\partial L}{\partial \hat{y}} \cdot \frac{\partial \hat{y}}{\partial b}
+\end{align*}
+\textbf{Combining contributions for a shared bias.}
+Because the same bias vector $b$ is used in both the hidden layer and the output layer (with $m=k$), the loss depends on $b$ through two distinct computational paths. The total gradient is the sum of the pathwise contributions:
+\[
+    \frac{\partial \mathcal{L}}{\partial b}
+    =
+    \left.\frac{\partial \mathcal{L}}{\partial b}\right|_{\text{via hidden}}
+    +
+    \left.\frac{\partial \mathcal{L}}{\partial b}\right|_{\text{via output}}.
+\]
+
+Equivalently, if we denote the hidden-layer sensitivity by $\delta_{\text{hidden}}$ and the output-layer sensitivity by $\delta_{\text{out}}$, then
+\[
+    \frac{\partial \mathcal{L}}{\partial b} = \delta_{\text{hidden}} + \delta_{\text{out}},
+\]
+which explicitly shows how gradients from multiple occurrences of the shared parameter are combined by summation.
+
+It is expected that sharing bias parameters affect stability and convergence speed due to parameter coupling.
+\begin{itemize}
+    \item \textbf{stability} Gradient magnitude for b accumlates if both hidden layer share the same signs compared to weights.
+    \item \textbf{convergence} As independant bias model has flexibility to shift activation threshold, but if $b1 = b2$ then we restrict the network capacity to learn optimal thresholds for both layers, which can slow down convergence and lead to suboptimal minima.
+    
+    The optimizer must find single compromising value for the shared bias that satisfies both layers which slows down convergence to optimal solution.
+\end{itemize}
+
+
+\end{document}
